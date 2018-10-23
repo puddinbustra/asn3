@@ -6,7 +6,7 @@ import queue
 import threading
 
 #Needs to check somewhere if packet is longer than mtu, and divide it if it is
-#Needs router class to take an extra parameter for the router table, and then maniuplate the forward function
+#Needs router class to take an extra parameter for the router table, and then manipulate the forward function
 #he suggests using the dictionary class
 
 ## wrapper class for a queue of packets
@@ -131,7 +131,7 @@ class Router:
         return 'Router_%s' % (self.name)
 
     ## look through the content of incoming interfaces and forward to
-    #Get packet from interfae, and if it exists, parse it from string, then put packet to out interface with the same interface
+    #Get packet from interface, and if it exists, parse it from string, then put packet to out interface with the same interface
     #So sending it from interface 0 to interface 0, for instance
     #To improve this, do a lookup in the router table
     # appropriate outgoing interfaces
