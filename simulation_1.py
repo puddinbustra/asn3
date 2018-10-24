@@ -54,9 +54,12 @@ if __name__ == '__main__':
 
     # create some send events
     #Creates sample data and takes care of it
-    for i in range(3):
-        #First parameter is address, and server in this case has address 2
-        client.udt_send(2, 'Sample data %d' % i)
+    #for i in range(3):
+        ##First parameter is address, and server in this case has address 2
+        #client.udt_send(2, 'Sample data %d' % i)
+
+    client.udt_send(2,"Long data piece. That must have lotsa characters.I don't want to read too much so I will ramble.")
+
 
     # give the network sufficient time to transfer all packets before quitting
     #This is to help deal with packet buildup. As this becomes longer, we may need to increase this to more seconds

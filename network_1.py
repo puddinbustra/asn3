@@ -89,8 +89,18 @@ class Host:
     #Take packet, and put it into the out interface. "that's it" he says
     def udt_send(self, dst_addr, data_S):
         p = NetworkPacket(dst_addr, data_S)
+        print("Len of data is ",len(data_S))
+        #Hugh adding - if length of data is between 50 and 100, this will work
+        if (len(data_S)>50):
+            p = NetworkPacket(dst_addr, data_S[:49])
+            p1 = NetworkPacket(dst_addr, data_S[49:])
+
+
         self.out_intf_L[0].put(p.to_byte_S())  # send packets always enqueued successfully
+        self.out_intf_L[0].put(p1.to_byte_S())  # send packets always enqueued successfully
+
         print('%s: sending packet "%s" on the out interface with mtu=%d' % (self, p, self.out_intf_L[0].mtu))
+        print('%s: sending packet "%s" on the out interface with mtu=%d' % (self, p1, self.out_intf_L[0].mtu))
 
     #Getting a packet from an in interface, and then print it
     ## receive packet from the network layer
