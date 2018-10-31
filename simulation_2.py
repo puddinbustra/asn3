@@ -3,8 +3,8 @@
 Created on Oct 12, 2016
 @author: mwittie
 '''
-import network_1 as network
-import link_1 as link
+import network_2 as network
+import link_2 as link
 import threading
 from time import sleep
 
@@ -12,7 +12,7 @@ from time import sleep
 
 ##configuration parameters
 router_queue_size = 0  # 0 means unlimited
-simulation_time = 1  # give the network sufficient time to transfer all packets before quitting
+simulation_time = 1  # give the network sufficient time to transfer all packets before quitting, may need to increase
 
 if __name__ == '__main__':
     object_L = []  # keeps track of objects, so we can kill their threads
@@ -37,8 +37,8 @@ if __name__ == '__main__':
     #These are between client, and router, then router and server,
     #Out interface first, in interface is second
     #So for this first line, client out interface 0, to router interface in 0
-    link_layer.add_link(link.Link(client, 0, router_a, 0, 50))
-    link_layer.add_link(link.Link(router_a, 0, server, 0, 50))
+    link_layer.add_link(link.Link(client, 0, router_a, 0, 30))
+    link_layer.add_link(link.Link(router_a, 0, server, 0, 30))
 
     # start all the objects
     #Each node, and the link layer all together need threads
@@ -57,8 +57,9 @@ if __name__ == '__main__':
     #for i in range(3):
         ##First parameter is address, and server in this case has address 2
         #client.udt_send(2, 'Sample data %d' % i)
-
-    client.udt_send(2,"Long data piece. That must have lotsa characters.I don't want to read too much so I will ramble.")
+    myData = "pretty long data piece. asldf"
+    print(len(myData),"Is the length of my data string")
+    client.udt_send(2,myData)
 
 
     # give the network sufficient time to transfer all packets before quitting

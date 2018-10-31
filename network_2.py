@@ -90,17 +90,17 @@ class Host:
     def udt_send(self, dst_addr, data_S):
         p = NetworkPacket(dst_addr, data_S)
         print("Len of data is ",len(data_S))
-        #Hugh adding - if length of data is between 50 and 100, this will work
+        ##Hugh adding - if length of data is between 50 and 100, this will work
         if (len(data_S)>50):
-            p = NetworkPacket(dst_addr, data_S[:49])
-            p1 = NetworkPacket(dst_addr, data_S[49:])
+             p = NetworkPacket(dst_addr, data_S[:49])
+             #p1 = NetworkPacket(dst_addr, data_S[49:])
 
 
         self.out_intf_L[0].put(p.to_byte_S())  # send packets always enqueued successfully
-        self.out_intf_L[0].put(p1.to_byte_S())  # send packets always enqueued successfully
+        #self.out_intf_L[0].put(p1.to_byte_S())
 
         print('%s: sending packet "%s" on the out interface with mtu=%d' % (self, p, self.out_intf_L[0].mtu))
-        print('%s: sending packet "%s" on the out interface with mtu=%d' % (self, p1, self.out_intf_L[0].mtu))
+       # print('%s: sending packet "%s" on the out interface with mtu=%d' % (self, p1, self.out_intf_L[0].mtu))
 
     #Getting a packet from an in interface, and then print it
     ## receive packet from the network layer
@@ -150,11 +150,24 @@ class Router:
         for i in range(len(self.in_intf_L)):
             pkt_S = None
             try:
+
                 # get packet from interface i
                 pkt_S = self.in_intf_L[i].get()
                 # if packet exists make a forwarding decision
+                print(len(pkt_S),"Is packet len")
+
                 if pkt_S is not None:
+                    print("Forwarding")
+                    ##Hugh altering
+                    #Go through each packet (adding 20 bytes for header), and segment it
+                    for j in range(packetLen // self.out_intf_L[0].mtu):
+                        pass
+
+
                     p = NetworkPacket.from_byte_S(pkt_S)  # parse a packet out
+                    print("Hugh is printing the packet now: ",p)
+
+
                     # HERE you will need to implement a lookup into the
                     # forwarding table to find the appropriate outgoing interface
                     # for now we assume the outgoing interface is also i
