@@ -5,6 +5,8 @@ Created on Oct 12, 2016
 '''
 import queue
 import threading
+#Hugh importing math for rounding up
+import math
 
 #Needs to check somewhere if packet is longer than mtu, and divide it if it is
 #Needs router class to take an extra parameter for the router table, and then maniuplate the forward function
@@ -87,20 +89,23 @@ class Host:
     # @param dst_addr: destination address for the packet
     # @param data_S: data being transmitted to the network layer
     #Take packet, and put it into the out interface. "that's it" he says
+    #5 digits for the address are stuck onto the packet
+
     def udt_send(self, dst_addr, data_S):
-        p = NetworkPacket(dst_addr, data_S)
-        print("Len of data is ",len(data_S))
-        ##Hugh adding - if length of data is between 50 and 100, this will work
-        if (len(data_S)>50):
-             p = NetworkPacket(dst_addr, data_S[:49])
-             #p1 = NetworkPacket(dst_addr, data_S[49:])
 
+        #Assumes mtu won't change during this
+        #Subtracts 5 to account for address being 5 digits to include each time
+        mtu = self.out_intf_L[0].mtu-5
+        
+        print("Len of data is ",len(data_S), "and data is:",data_S)
+        print()
 
-        self.out_intf_L[0].put(p.to_byte_S())  # send packets always enqueued successfully
-        #self.out_intf_L[0].put(p1.to_byte_S())
-
-        print('%s: sending packet "%s" on the out interface with mtu=%d' % (self, p, self.out_intf_L[0].mtu))
-       # print('%s: sending packet "%s" on the out interface with mtu=%d' % (self, p1, self.out_intf_L[0].mtu))
+        ##Hugh adding - cut data up if it's longer than mtu
+        for i in range(math.ceil(len(data_S)/mtu)):
+            p = NetworkPacket(dst_addr, data_S[mtu*i:mtu*(i+1)])
+            self.out_intf_L[0].put(p.to_byte_S())  # send packets always enqueued successfully
+            #print("Now sending this many chars:: ", len(data_S[mtu*i:mtu*(i+1)]))
+            print('%s: sending packet "%s" on the out interface with mtu=%d' % (self, p, self.out_intf_L[0].mtu))
 
     #Getting a packet from an in interface, and then print it
     ## receive packet from the network layer
@@ -154,18 +159,18 @@ class Router:
                 # get packet from interface i
                 pkt_S = self.in_intf_L[i].get()
                 # if packet exists make a forwarding decision
-                print(len(pkt_S),"Is packet len")
+                #print(len(pkt_S),"Is packet len")
 
                 if pkt_S is not None:
                     print("Forwarding")
-                    ##Hugh altering
-                    #Go through each packet (adding 20 bytes for header), and segment it
-                    for j in range(packetLen // self.out_intf_L[0].mtu):
-                        pass
+                    ###Hugh altering
+                    ##Go through each packet (adding 20 bytes for header), and segment it
+                    #for j in range(packetLen // self.out_intf_L[0].mtu):
+                    #    pass
 
 
                     p = NetworkPacket.from_byte_S(pkt_S)  # parse a packet out
-                    print("Hugh is printing the packet now: ",p)
+                    #print("Hugh is printing the packet now: ",p)
 
 
                     # HERE you will need to implement a lookup into the

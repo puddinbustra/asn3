@@ -37,8 +37,8 @@ if __name__ == '__main__':
     #These are between client, and router, then router and server,
     #Out interface first, in interface is second
     #So for this first line, client out interface 0, to router interface in 0
-    link_layer.add_link(link.Link(client, 0, router_a, 0, 30))
-    link_layer.add_link(link.Link(router_a, 0, server, 0, 30))
+    link_layer.add_link(link.Link(client, 0, router_a, 0, 50))
+    link_layer.add_link(link.Link(router_a, 0, server, 0, 50))
 
     # start all the objects
     #Each node, and the link layer all together need threads
@@ -57,7 +57,10 @@ if __name__ == '__main__':
     #for i in range(3):
         ##First parameter is address, and server in this case has address 2
         #client.udt_send(2, 'Sample data %d' % i)
-    myData = "pretty long data piece. asldf"
+
+    #Hugh changing
+    myData = "pretty long data piece. Should be over 50 characters to test the new for loop thin I made. It will work better"
+    #myData = "Short data piece"
     print(len(myData),"Is the length of my data string")
     client.udt_send(2,myData)
 
