@@ -38,7 +38,7 @@ if __name__ == '__main__':
     #Out interface first, in interface is second
     #So for this first line, client out interface 0, to router interface in 0
     link_layer.add_link(link.Link(client, 0, router_a, 0, 50))
-    link_layer.add_link(link.Link(router_a, 0, server, 0, 50))
+    link_layer.add_link(link.Link(router_a, 0, server, 0, 30))
 
     # start all the objects
     #Each node, and the link layer all together need threads
@@ -59,8 +59,8 @@ if __name__ == '__main__':
         #client.udt_send(2, 'Sample data %d' % i)
 
     #Hugh changing
-    myData = "pretty long data piece. Should be over 50 characters to test the new for loop thin I made. It will work better"
-    #myData = "Short data piece"
+    #myData = "pretty long data piece. This has over 100 characters to test the new for loop thin I made. It will work better"
+    myData = "Short data piece, has have 35 chars"
     print(len(myData),"Is the length of my data string")
     client.udt_send(2,myData)
 

@@ -96,7 +96,7 @@ class Host:
         #Assumes mtu won't change during this
         #Subtracts 5 to account for address being 5 digits to include each time
         mtu = self.out_intf_L[0].mtu-5
-        
+
         print("Len of data is ",len(data_S), "and data is:",data_S)
         print()
 
@@ -164,22 +164,42 @@ class Router:
                 if pkt_S is not None:
                     print("Forwarding")
                     ###Hugh altering
-                    ##Go through each packet (adding 20 bytes for header), and segment it
+                    ##Go through each packet (adding 20 bytes for udt header, maybe 20 for tcp to just first), and segment it
                     #for j in range(packetLen // self.out_intf_L[0].mtu):
                     #    pass
 
 
                     p = NetworkPacket.from_byte_S(pkt_S)  # parse a packet out
-                    #print("Hugh is printing the packet now: ",p)
+                    print("Hugh is printing the packet now: ",p)
+                    print("Trying to print a piece of the packet: ",str(p)[5:])
 
+                    #Address and payload from the packet
+                    #Note that that if the address length changes, these numbers will have to change to fit that
+                    dst_addr, data_S = str(p)[:5], str(p)[5:]
 
-                    # HERE you will need to implement a lookup into the
-                    # forwarding table to find the appropriate outgoing interface
-                    # for now we assume the outgoing interface is also i
-                    #Will be replacing this code with something better - "not dumb"
-                    self.out_intf_L[i].put(p.to_byte_S(), True)
-                    print('%s: forwarding packet "%s" from interface %d to %d with mtu %d' \
-                          % (self, p, i, i, self.out_intf_L[i].mtu))
+                    ## Assumes mtu won't change during this indentation
+                    ## Subtracts number
+                    mtu = self.out_intf_L[0].mtu
+                    #print("MTU IS ",mtu)
+
+                    #print("Len of data is ", len(data_S), "and data is:", data_S)
+
+                    #Hugh adding - cut data up if it's longer than mtu
+                    for j in range(math.ceil(len(data_S) / mtu)):
+                        p = NetworkPacket(dst_addr, data_S[mtu * j:mtu * (j + 1)])
+                        self.out_intf_L[0].put(p.to_byte_S())  # send packets always enqueued successfully
+                        # print("Now sending this many chars:: ", len(data_S[mtu*i:mtu*(i+1)]))
+                        print('%s: sending packet "%s" on the out interface with mtu=%d' % (
+                        self, p, self.out_intf_L[0].mtu))
+
+                        # HERE you will need to implement a lookup into the
+                        # forwarding table to find the appropriate outgoing interface
+                        # for now we assume the outgoing interface is also i
+                        #Will be replacing this code with something better - "not dumb"
+                        self.out_intf_L[i].put(p.to_byte_S(), True)
+                        print('%s: forwarding packet "%s" from interface %d to %d with mtu %d' \
+                              % (self, p, i, i, self.out_intf_L[i].mtu))
+
             except queue.Full:
                 print('%s: packet "%s" lost on interface %d' % (self, p, i))
                 pass
