@@ -41,13 +41,22 @@ class Interface:
 class NetworkPacket:
     ## packet encoding lengths
     dst_addr_S_length = 5
-
+    pid = 0
     ##@param dst_addr: address of the destination host
     # @param data_S: packet payload
+    #Hugh adding - id, frag flag, offset
     def __init__(self, dst_addr, data_S):
         self.dst_addr = dst_addr
         self.data_S = data_S
-
+        #Need length here too?
+        self.fragFlag = 0
+        self.offset = 0
+        #pid will count through 19, just so it has an end bound, and then it will reset to 0
+        self.pid = NetworkPacket.pid
+        if NetworkPacket.pid == 20:
+            NetworkPacket.pid = 0
+        else:
+            NetworkPacket.pid += 1
 
     ## called when printing the object
     def __str__(self):
@@ -89,13 +98,11 @@ class Host:
     # @param dst_addr: destination address for the packet
     # @param data_S: data being transmitted to the network layer
     #Take packet, and put it into the out interface. "that's it" he says
-    #5 digits for the address are stuck onto the packet
 
     def udt_send(self, dst_addr, data_S):
 
         #Assumes mtu won't change during this
-        #Subtracts 5 to account for address being 5 digits to include each time
-        mtu = self.out_intf_L[0].mtu-5
+        mtu = self.out_intf_L[0].mtu-dst_addr_S_length
 
         print("Len of data is ",len(data_S), "and data is:",data_S)
         print()
@@ -135,6 +142,7 @@ class Router:
     # @param intf_count: the number of input and output interfaces
     # @param max_queue_size: max queue length (passed to Interface)
     #List of in and out interfaces
+
     def __init__(self, name, intf_count, max_queue_size):
         self.stop = False  # for thread termination
         self.name = name
@@ -171,11 +179,11 @@ class Router:
 
                     p = NetworkPacket.from_byte_S(pkt_S)  # parse a packet out
                     print("Hugh is printing the packet now: ",p)
-                    print("Trying to print a piece of the packet: ",str(p)[5:])
+                    print("Trying to print a piece of the packet: ",str(p)[dst_addr_S_length:])
 
                     #Address and payload from the packet
                     #Note that that if the address length changes, these numbers will have to change to fit that
-                    dst_addr, data_S = str(p)[:5], str(p)[5:]
+                    dst_addr, data_S = str(p)[:dst_addr_S_length], str(p)[dst_addr_S_length:]
 
                     ## Assumes mtu won't change during this indentation
                     ## Subtracts number
@@ -183,6 +191,7 @@ class Router:
                     #print("MTU IS ",mtu)
 
                     #print("Len of data is ", len(data_S), "and data is:", data_S)
+                    #NEXT - add id, frag flag, and offset to all the packets (fragmented or not)
 
                     #Hugh adding - cut data up if it's longer than mtu
                     for j in range(math.ceil(len(data_S) / mtu)):
@@ -191,14 +200,15 @@ class Router:
                         # print("Now sending this many chars:: ", len(data_S[mtu*i:mtu*(i+1)]))
                         print('%s: sending packet "%s" on the out interface with mtu=%d' % (
                         self, p, self.out_intf_L[0].mtu))
-
-                        # HERE you will need to implement a lookup into the
-                        # forwarding table to find the appropriate outgoing interface
-                        # for now we assume the outgoing interface is also i
-                        #Will be replacing this code with something better - "not dumb"
                         self.out_intf_L[i].put(p.to_byte_S(), True)
                         print('%s: forwarding packet "%s" from interface %d to %d with mtu %d' \
                               % (self, p, i, i, self.out_intf_L[i].mtu))
+
+
+            # HERE you will need to implement a lookup into the
+            # forwarding table to find the appropriate outgoing interface
+            # for now we assume the outgoing interface is also i
+            # Will be replacing this code with something better - "not dumb"
 
             except queue.Full:
                 print('%s: packet "%s" lost on interface %d' % (self, p, i))
