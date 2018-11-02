@@ -182,7 +182,6 @@ class Router:
                     print("Trying to print a piece of the packet: ",str(p)[dst_addr_S_length:])
 
                     #Address and payload from the packet
-                    #Note that that if the address length changes, these numbers will have to change to fit that
                     dst_addr, data_S = str(p)[:dst_addr_S_length], str(p)[dst_addr_S_length:]
 
                     ## Assumes mtu won't change during this indentation
