@@ -45,14 +45,15 @@ class NetworkPacket:
     ##@param dst_addr: address of the destination host
     # @param data_S: packet payload
     #Hugh adding - id, frag flag, offset
-    def __init__(self, dst_addr, data_S):
+    def __init__(self, dst_addr, data_S,frag=0,offset=0,pid = NetworkPacket.pid):
         self.dst_addr = dst_addr
         self.data_S = data_S
+
         #Need length here too?
-        self.fragFlag = 0
-        self.offset = 0
+        self.fragFlag = frag
+        self.offset = offset
         #pid will count through 19, just so it has an end bound, and then it will reset to 0
-        self.pid = NetworkPacket.pid
+        self.pid = pid
         if NetworkPacket.pid == 20:
             NetworkPacket.pid = 0
         else:
@@ -190,18 +191,31 @@ class Router:
                     #print("MTU IS ",mtu)
 
                     #print("Len of data is ", len(data_S), "and data is:", data_S)
-                    #NEXT - add id, frag flag, and offset to all the packets (fragmented or not)
+                    #def __init__(self, dst_addr, data_S, frag=0, offset=0, pid=NetworkPacket.pid):
 
                     #Hugh adding - cut data up if it's longer than mtu
-                    for j in range(math.ceil(len(data_S) / mtu)):
-                        p = NetworkPacket(dst_addr, data_S[mtu * j:mtu * (j + 1)])
-                        self.out_intf_L[0].put(p.to_byte_S())  # send packets always enqueued successfully
-                        # print("Now sending this many chars:: ", len(data_S[mtu*i:mtu*(i+1)]))
-                        print('%s: sending packet "%s" on the out interface with mtu=%d' % (
-                        self, p, self.out_intf_L[0].mtu))
+                    if(math.ceil(len(data_S) / mtu) > 1):
+                        for j in range(math.ceil(len(data_S) / mtu)):
+                            frag = 0
+                            #If we're on the last one, put in frag as 1
+                            if(j == math.ceil(len(data_S)) / mtu):
+                                frag = 1
+
+                            #NEXT - add offset and pid
+                            p = NetworkPacket(dst_addr, data_S[mtu * j:mtu * (j + 1)],frag,)
+                            self.out_intf_L[0].put(p.to_byte_S())  # send packets always enqueued successfully
+                            # print("Now sending this many chars:: ", len(data_S[mtu*i:mtu*(i+1)]))
+                            print('%s: sending packet "%s" on the out interface with mtu=%d' % (
+                                self, p, self.out_intf_L[0].mtu))
+                            self.out_intf_L[i].put(p.to_byte_S(), True)
+                            print('%s: forwarding packet "%s" from interface %d to %d with mtu %d' \
+                                  % (self, p, i, i, self.out_intf_L[i].mtu))
+                    else:
+                        p = NetworkPacket.from_byte_S(pkt_S)
                         self.out_intf_L[i].put(p.to_byte_S(), True)
                         print('%s: forwarding packet "%s" from interface %d to %d with mtu %d' \
                               % (self, p, i, i, self.out_intf_L[i].mtu))
+
 
 
             # HERE you will need to implement a lookup into the
