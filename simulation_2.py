@@ -67,7 +67,7 @@ if __name__ == '__main__':
     #0s are in order here: frag, offset, pid
     #Need to manually put in the id here; it will not increase on its own
     #Note in packet format it's: pid,frag,offset,dst_addr,payload
-    client.udt_send(2, myData,16,0,0)
+    client.udt_send(2, myData,7,0,0)
 
 
     # give the network sufficient time to transfer all packets before quitting
