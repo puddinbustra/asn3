@@ -3,8 +3,8 @@
 Created on Oct 12, 2016
 @author: mwittie
 '''
-import network_2 as network
-import link_2 as link
+import network_3 as network
+import link_3 as link
 import threading
 from time import sleep
 
@@ -18,15 +18,25 @@ if __name__ == '__main__':
     object_L = []  # keeps track of objects, so we can kill their threads
 
     # create network nodes
-    client = network.Host(1)
+    client1 = network.Host(1)
+    client2 = network.Host(2)
     #Take client and append it to the object list
-    object_L.append(client)
-    server = network.Host(2)
-    object_L.append(server)
-    #This router a is given a name, interface count is the number of in and out interfaces (these go together,
-    #Max queue size, 0 means they are unlimited
-    router_a = network.Router(name='A', intf_count=1, max_queue_size=router_queue_size)
+    object_L.append(client1)
+    object_L.append(client2)
+    server1 = network.Host(3)
+    server2 = network.Host(4)
+    object_L.append(server1)
+    object_L.append(server2)
+    #Routers are given a name, in_count is the number of in interfaces, out_count is the number of out interfaces,
+    #Max queue size 0 means they are unlimited
+    router_a = network.Router(name='A', in_count=2, out_count=2, max_queue_size=router_queue_size)
+    router_b = network.Router(name='B', in_count=1, out_count=1, max_queue_size=router_queue_size)
+    router_c = network.Router(name='C', in_count=1, out_count=1, max_queue_size=router_queue_size)
+    router_d = network.Router(name='D', in_count=2, out_count=2, max_queue_size=router_queue_size)
     object_L.append(router_a)
+    object_L.append(router_b)
+    object_L.append(router_c)
+    object_L.append(router_d)
 
     # create a Link Layer to keep track of links between network nodes
     link_layer = link.LinkLayer()
@@ -34,11 +44,21 @@ if __name__ == '__main__':
 
     # add all the links
     # link parameters: from_node, from_intf_num, to_node, to_intf_num, mtu
-    #These are between client, and router, then router and server,
-    #Out interface first, in interface is second
-    #So for this first line, client out interface 0, to router interface in 0
-    link_layer.add_link(link.Link(client, 0, router_a, 0, 50))
-    link_layer.add_link(link.Link(router_a, 0, server, 0, 30))
+
+    # links between clients 1 and 2 to router A
+    link_layer.add_link(link.Link(client1, 0, router_a, 0, 50))
+    link_layer.add_link(link.Link(client2, 0, router_a, 1, 50))
+    # links between router A and routers B and C
+    link_layer.add_link(link.Link(router_a, 0, router_b, 0, 30))
+    link_layer.add_link(link.Link(router_a, 1, router_c, 0, 30))
+    # link from router B to router D
+    link_layer.add_link(link.Link(router_b, 0, router_d, 0, 30))
+    # link from router C to router D
+    link_layer.add_link(link.Link(router_c, 0, router_d, 1, 30))
+    # links from router D to servers 1 and 2
+    link_layer.add_link(link.Link(router_d, 0, server1, 0, 30))
+    link_layer.add_link(link.Link(router_d, 1, server2, 0, 30))
+
 
     # start all the objects
     #Each node, and the link layer all together need threads
@@ -59,8 +79,8 @@ if __name__ == '__main__':
         #client.udt_send(2, 'Sample data %d' % i)
 
     #Hugh changing
-    myData = "pretty long data piece. This has over 100 characters to test the new for loop thin I made. It will work better"
-    #myData = "Short data piece, has have 35 chars"
+    #myData = "pretty long data piece. This has over 100 characters to test the new for loop thin I made. It will work better"
+    myData = "Short data piece, has have 35 chars"
     print(len(myData),"Is the length of my data string")
 
     #client.udt_send(2,myData)
