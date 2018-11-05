@@ -12,7 +12,7 @@ from time import sleep
 
 ##configuration parameters
 router_queue_size = 0  # 0 means unlimited
-simulation_time = 1.5  # give the network sufficient time to transfer all packets before quitting, may need to increase
+simulation_time = 2  # give the network sufficient time to transfer all packets before quitting, may need to increase
 
 if __name__ == '__main__':
     object_L = []  # keeps track of objects, so we can kill their threads

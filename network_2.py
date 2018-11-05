@@ -136,12 +136,22 @@ class Host:
         if pkt_S is not None:
             #frag = int(str(p)[NetworkPacket.pid_len: NetworkPacket.pid_len + NetworkPacket.frag_len])
             payload = ""
-            print("Going through receive now")
+            print()
+            #print("Going through receive now")
 
             #current highest offset + data length
             max = 0
-            #Lower bound is the lowest offset we've put in so far
-            lb = 9.9 * 10 * NetworkPacket.offset_len
+            #Used headers to check that we haven't gotten a duplicate
+            #Format being [pid,offset]
+            headers = []
+            #Lower bound is the lowest offset we've put in so far. To start, let's make it an arbitrary high number
+            lb = 9 * 10 * NetworkPacket.offset_len
+            pid_len = NetworkPacket.pid_len
+            frag_len = NetworkPacket.frag_len
+            offset_len = NetworkPacket.offset_len
+            dst_addr_S_length = NetworkPacket.dst_addr_S_length
+            #To store the final header
+            header = ""
 
             #Will go through once if not fragmented
             #Right now, this will have to be changed if a packet is fragmented repeatedely
@@ -153,17 +163,11 @@ class Host:
                 while(pkt_S is None):
                     # Get the next packet
                     pkt_S = self.in_intf_L[0].get()
-                print("Receieved in udt receive:", pkt_S)
-                print()
-                print("Payload is:",payload)
+                #print("Received in udt receive:", pkt_S)
                 p = NetworkPacket.from_byte_S(pkt_S)
 
-                pid_len = NetworkPacket.pid_len
-                frag_len = NetworkPacket.frag_len
-                offset_len = NetworkPacket.offset_len
-                dst_addr_S_length = NetworkPacket.dst_addr_S_length
 
-                # Stuff from the packet
+                # Stuff from the packet, unused stuff maybe can be used later if we need modifications
                 pid = str(p)[: pid_len]
                 frag = int(str(p)[pid_len: pid_len + frag_len])
                 #print("frag is", frag,"packet is",p,"printed above is",int(str(p)[pid_len: pid_len + frag_len]))
@@ -173,26 +177,41 @@ class Host:
 
 
                 #Going through the different cases of where to stick the payload
+                #If we get a duplicate, then don't do anything
+                if((pid,offset) in headers):
+                    #print("Duplicate, not adding to payload")
+                    pass
                 #If it comes after, stick it on the end
-                if(max<offset):
+                elif(offset>=max):
                     payload = payload + data_S
                 #If it comes before, stick it at the beginning
                 elif(lb>offset):
                     payload = data_S + payload
                 #If it's in the middle, stick it in the middle
-                elif(lb<offset and max>offset):
+                elif(lb<offset and offset<max):
                     payload = payload[:offset] + data_S + payload[offset:]
+                else:
+                    print("Data not added to payload. Something is wrong.")
+                #print(payload,"is my payload")
 
-                max = len(payload)
+                #print("In order: max,lb,offset",max,lb,offset)
+
+                max = len(payload) + offset
+
                 if(lb > offset):
                     lb = offset
 
+                headers.append((pid,offset))
+
                 if (frag == 0):
+                    header = str(p)[:NetworkPacket.header_len]
                     break
+
             #After dealing with the packet, free up the variable for the next one
                 pkt_S = None
 
-            print('%s: received packet "%s" on the in interface' % (self, payload))
+
+            print('%s: received packet "%s%s" on the in interface' % (self,header, payload))
             #print("Received payload",payload)
 
     ## thread target for the host to keep receiving data
@@ -244,8 +263,8 @@ class Router:
                 # if packet exists make a forwarding decision
 
                 if pkt_S is not None:
-                    print("Forwarding")
-                    print()
+                    #print("Forwarding")
+                    #print()
 
                     p = NetworkPacket.from_byte_S(pkt_S)  # parse a packet out
                     pid_len = NetworkPacket.pid_len
