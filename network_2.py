@@ -8,7 +8,6 @@ import threading
 #Hugh importing math for rounding up
 import math
 
-#Needs to check somewhere if packet is longer than mtu, and divide it if it is
 #Needs router class to take an extra parameter for the router table, and then maniuplate the forward function
 #he suggests using the dictionary class
 
@@ -128,7 +127,7 @@ class Host:
             #print("Now sending this many chars:: ", len(data_S[mtu*i:mtu*(i+1)]))
             print('%s: sending packet "%s" on the out interface with mtu=%d' % (self, p, self.out_intf_L[0].mtu))
 
-    #Getting a packet from an in interface, and then print it
+    #Delivers the packet - printing it at the end
     ## receive packet from the network layer
     def udt_receive(self):
         pkt_S = self.in_intf_L[0].get()
@@ -249,14 +248,13 @@ class Router:
 
     ## look through the content of incoming interfaces and forward to
     #Get packet from interfae, and if it exists, parse it from string, then put packet to out interface with the same interface
-    #So sending it from interface 0 to interface 0, for instance
+        #So sending it from interface 0 to interface 0, for instance
     #To improve this, do a lookup in the router table
     # appropriate outgoing interfaces
     def forward(self):
         for i in range(len(self.in_intf_L)):
             pkt_S = None
             try:
-
                 # get packet from interface i
                 pkt_S = self.in_intf_L[i].get()
 
@@ -279,8 +277,7 @@ class Router:
                     dst_addr = str(p)[pid_len + frag_len + offset_len : pid_len + frag_len + offset_len + dst_addr_S_length]
                     data_S   = str(p)[NetworkPacket.header_len:]
 
-                    ## Assumes mtu won't change during this indentation
-                    ## Subtracts number
+                    ## Subtracts header length, so we can have the mtu of just the data
                     mtu = self.out_intf_L[0].mtu - NetworkPacket.header_len
                     #print("MTU IS ",mtu)
 
@@ -302,12 +299,8 @@ class Router:
                             # offset is just previous offset sent in, with the mtu * how many times we've gone through
                             offset = offset +  mtu * j
 
-
                             #print("offset is ",offset)
 
-
-
-                            #Fragmenting                       data_S[mtu*i:mtu*(i+1)]
                             p = NetworkPacket(dst_addr, data_S[mtu * j : mtu * (j + 1)],pid,frag,offset)
                             self.out_intf_L[0].put(p.to_byte_S())
                             #print("Now sending this many chars:: ", len(data_S[mtu*i:mtu*(i+1)]))
@@ -324,12 +317,6 @@ class Router:
                         #print('%s: forwarding packet "%s" from interface w/out fragmentation %d to %d with mtu %d' \
                         #      % (self, p, i, i, self.out_intf_L[i].mtu))
 
-
-
-            # HERE you will need to implement a lookup into the
-            # forwarding table to find the appropriate outgoing interface
-            # for now we assume the outgoing interface is also i
-            # Will be replacing this code with something better - "not dumb"
 
             except queue.Full:
                 print('%s: packet "%s" lost on interface %d' % (self, p, i))
