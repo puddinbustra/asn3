@@ -289,6 +289,7 @@ class Router:
                                                                 + offset_len + dst_addr_S_length + src_addr_S_length]
                     data_S = str(p)[NetworkPacket.header_len:]
 
+                    interface = self.table[(src_addr, dst_addr)]
                     ## Assumes mtu won't change during this indentation
                     ## Subtracts number
                     mtu = self.out_intf_L[0].mtu - NetworkPacket.header_len
@@ -312,31 +313,18 @@ class Router:
                             # offset is just previous offset sent in, with the mtu * how many times we've gone through
                             offset = offset + mtu * j
 
-                            # print("offset is ",offset)
-
                             # Fragmenting                       data_S[mtu*i:mtu*(i+1)]
                             p = NetworkPacket(src_addr, dst_addr, data_S[mtu * j: mtu * (j + 1)], pid, frag, offset)
-                            self.out_intf_L[0].put(p.to_byte_S())
-                            # print("Now sending this many chars:: ", len(data_S[mtu*i:mtu*(i+1)]))
-                            print('%s: sending packet "%s" on the out interface with mtu=%d' % (
-                                self, p, self.out_intf_L[0].mtu))
-                            self.out_intf_L[self.table[(src_addr, dst_addr)]].put(p.to_byte_S(), True)
+                            self.out_intf_L[interface].put(p.to_byte_S(), True)
                     #     print('%s: forwarding packet "%s" from interface %d to %d with mtu %d' \
                     #           % (self, p, i, i, self.out_intf_L[i].mtu))
 
                     # If not fragmenting
                     else:
                         p = NetworkPacket.from_byte_S(pkt_S)
-                        self.out_intf_L[self.table[(src_addr, dst_addr)]].put(p.to_byte_S(), True)
+                        self.out_intf_L[interface].put(p.to_byte_S(), True)
                         # print('%s: forwarding packet "%s" from interface w/out fragmentation %d to %d with mtu %d' \
                         #      % (self, p, i, i, self.out_intf_L[i].mtu))
-
-
-
-            # HERE you will need to implement a lookup into the
-            # forwarding table to find the appropriate outgoing interface
-            # for now we assume the outgoing interface is also i
-            # Will be replacing this code with something better - "not dumb"
 
             except queue.Full:
                 print('%s: packet "%s" lost on interface %d' % (self, p, i))

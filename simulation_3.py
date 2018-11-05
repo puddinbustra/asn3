@@ -8,9 +8,9 @@ import link_3 as link
 import threading
 from time import sleep
 
-#Will need to add more interfaces, and routers, and stuff
+# Will need to add more interfaces, and routers, and stuff
 
-##configuration parameters
+## configuration parameters
 router_queue_size = 0  # 0 means unlimited
 simulation_time = 6  # give the network sufficient time to transfer all packets before quitting, may need to increase
 
@@ -20,7 +20,7 @@ if __name__ == '__main__':
     # create network nodes
     client1 = network.Host(1)
     client2 = network.Host(2)
-    #Take client and append it to the object list
+    # Take client and append it to the object list
     object_L.append(client1)
     object_L.append(client2)
 
@@ -29,8 +29,8 @@ if __name__ == '__main__':
     object_L.append(server1)
     object_L.append(server2)
 
-    #Routers are given a name, in_count is the number of in interfaces, out_count is the number of out interfaces,
-    #Max queue size 0 means they are unlimited
+    # Routers are given a name, in_count is the number of in interfaces, out_count is the number of out interfaces,
+    # Max queue size 0 means they are unlimited
     table_a = {('00001', '00003'): 0, ('00001', '00004'): 0,
                ('00002', '00003'): 1, ('00002', '00004'): 1}
     router_a = network.Router(name='A', in_count=2, out_count=2, max_queue_size=router_queue_size, table=table_a)
@@ -71,7 +71,7 @@ if __name__ == '__main__':
 
 
     # start all the objects
-    #Each node, and the link layer all together need threads
+    # Each node, and the link layer all together need threads
     thread_L = []
     thread_L.append(threading.Thread(name=client1.__str__(), target=client1.run))
     thread_L.append(threading.Thread(name=client2.__str__(), target=client2.run))
@@ -90,25 +90,25 @@ if __name__ == '__main__':
         t.start()
 
     # create some send events
-    #Creates sample data and takes care of it
-    #for i in range(3):
-        ##First parameter is address, and server in this case has address 2
-        #client.udt_send(2, 'Sample data %d' % i)
+    # Creates sample data and takes care of it
+    # for i in range(3):
+        ## First parameter is address, and server in this case has address 2
+        # client.udt_send(2, 'Sample data %d' % i)
 
-    #Hugh changing
-    #myData = "pretty long data piece. This has over 100 characters to test the new for loop thin I made. It will work better"
+    # Hugh changing
+    # myData = "pretty long data piece. This has over 100 characters to test the new for loop thin I made. It will work better"
     myData = "Short data piece, has have 35 chars"
     print(len(myData),"Is the length of my data string")
 
-    #client.udt_send(2,myData)
-    #0s are in order here: frag, offset, pid
-    #Need to manually put in the id here; it will not increase on its own
-    #Note in packet format it's: pid,frag,offset,dst_addr,payload
-    client2.udt_send(4, myData, 66, 0, 0)
+    # client.udt_send(2,myData)
+    # 0s are in order here: frag, offset, pid
+    # Need to manually put in the id here; it will not increase on its own
+    # Note in packet format it's: pid,frag,offset,dst_addr,payload
+    client1.udt_send(4, myData, 66, 0, 0)
 
     # give the network sufficient time to transfer all packets before quitting
-    #This is to help deal with packet buildup. As this becomes longer, we may need to increase this to more seconds
-    #So if it starts ending early, maybe increase this simulation time
+    # This is to help deal with packet buildup. As this becomes longer, we may need to increase this to more seconds
+    # So if it starts ending early, maybe increase this simulation time
     sleep(simulation_time)
 
     # join all threads
