@@ -46,7 +46,7 @@ class NetworkPacket:
     frag_len = 1
     offset_len = 3
     pid_len = 2
-    header_len = pid_len + offset_len + frag_len + dst_addr_S_length
+    header_len = pid_len + offset_len + frag_len + dst_addr_S_length + src_addr_S_length
 
     ##@param dst_addr: address of the destination host
     # @param data_S: packet payload
@@ -89,10 +89,10 @@ class NetworkPacket:
         offset = int(byte_S[self.pid_len + self.frag_len: self.pid_len + self.frag_len + self.offset_len])
         dst_addr = int(
             byte_S[self.pid_len + self.frag_len + self.offset_len:self.pid_len + self.frag_len + self.offset_len
-                                                                  + self.dst_addr_S_length])
+                                                                               + self.dst_addr_S_length])
         src_addr = int(
-            byte_S[self.pid_len + self.frag_len + self.offset_len:self.pid_len + self.frag_len + self.offset_len
-                                                                  + self.dst_addr_S_length + self.src_addr_S_length])
+            byte_S[self.pid_len + self.frag_len + self.offset_len + self.dst_addr_S_length:self.pid_len + self.frag_len
+                                                + self.offset_len + self.dst_addr_S_length + self.src_addr_S_length])
         data_S = byte_S[NetworkPacket.header_len:]
         return self(src_addr, dst_addr, data_S, pid, frag, offset)
 
@@ -179,7 +179,7 @@ class Host:
                 # print("frag is", frag,"packet is",p,"printed above is",int(str(p)[pid_len: pid_len + frag_len]))
                 offset = int(str(p)[pid_len + frag_len: pid_len + frag_len + offset_len])
                 dst_addr = str(p)[pid_len + frag_len + offset_len: pid_len + frag_len + offset_len + dst_addr_S_length]
-                src_addr = str(p)[pid_len + frag_len + offset_len: pid_len + frag_len + offset_len
+                src_addr = str(p)[pid_len + frag_len + offset_len + dst_addr_S_length: pid_len + frag_len + offset_len
                                                                    + dst_addr_S_length + src_addr_S_length]
                 data_S = str(p)[NetworkPacket.header_len:]
 
@@ -242,12 +242,13 @@ class Router:
     # @param max_queue_size: max queue length (passed to Interface)
     # List of in and out interfaces
 
-    def __init__(self, name, in_count, out_count, max_queue_size):
+    def __init__(self, name, in_count, out_count, max_queue_size, routing_table=None):
         self.stop = False  # for thread termination
         self.name = name
         # create a list of interfaces
         self.in_intf_L = [Interface(max_queue_size) for _ in range(in_count)]
         self.out_intf_L = [Interface(max_queue_size) for _ in range(out_count)]
+        self.routing_table = routing_table
 
     ## called when printing the object
     def __str__(self):
@@ -262,7 +263,6 @@ class Router:
         for i in range(len(self.in_intf_L)):
             pkt_S = None
             try:
-
                 # get packet from interface i
                 pkt_S = self.in_intf_L[i].get()
 
@@ -284,9 +284,11 @@ class Router:
                     frag = str(p)[pid_len: pid_len + frag_len]
                     offset = int(str(p)[pid_len + frag_len: pid_len + frag_len + offset_len])
                     dst_addr = str(p)[pid_len + frag_len + offset_len: pid_len + frag_len + offset_len
-                                                                       + dst_addr_S_length]
-                    src_addr = str(p)[pid_len + frag_len + offset_len: pid_len + frag_len + offset_len
-                                                                       + dst_addr_S_length + src_addr_S_length]
+                                                                + dst_addr_S_length]
+                    print('recieved destination address: %s' % dst_addr)
+                    src_addr = str(p)[pid_len + frag_len + offset_len + dst_addr_S_length: pid_len + frag_len
+                                                                + offset_len + dst_addr_S_length + src_addr_S_length]
+                    print('recieved source address %s' % src_addr)
                     data_S = str(p)[NetworkPacket.header_len:]
 
                     ## Assumes mtu won't change during this indentation

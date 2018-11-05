@@ -23,10 +23,12 @@ if __name__ == '__main__':
     #Take client and append it to the object list
     object_L.append(client1)
     object_L.append(client2)
+
     server1 = network.Host(3)
     server2 = network.Host(4)
     object_L.append(server1)
     object_L.append(server2)
+
     #Routers are given a name, in_count is the number of in interfaces, out_count is the number of out interfaces,
     #Max queue size 0 means they are unlimited
     router_a = network.Router(name='A', in_count=2, out_count=2, max_queue_size=router_queue_size)
@@ -64,8 +66,15 @@ if __name__ == '__main__':
     #Each node, and the link layer all together need threads
     thread_L = []
     thread_L.append(threading.Thread(name=client1.__str__(), target=client1.run))
+    thread_L.append(threading.Thread(name=client2.__str__(), target=client2.run))
+
+    thread_L.append(threading.Thread(name=server1.__str__(), target=server1.run))
     thread_L.append(threading.Thread(name=server2.__str__(), target=server2.run))
+
     thread_L.append(threading.Thread(name=router_a.__str__(), target=router_a.run))
+    thread_L.append(threading.Thread(name=router_b.__str__(), target=router_b.run))
+    thread_L.append(threading.Thread(name=router_c.__str__(), target=router_c.run))
+    thread_L.append(threading.Thread(name=router_d.__str__(), target=router_d.run))
 
     thread_L.append(threading.Thread(name="Network", target=link_layer.run))
 
@@ -88,7 +97,6 @@ if __name__ == '__main__':
     #Need to manually put in the id here; it will not increase on its own
     #Note in packet format it's: pid,frag,offset,dst_addr,payload
     client1.udt_send(3, myData, 66, 0, 0)
-
 
     # give the network sufficient time to transfer all packets before quitting
     #This is to help deal with packet buildup. As this becomes longer, we may need to increase this to more seconds
