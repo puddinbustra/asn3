@@ -242,13 +242,13 @@ class Router:
     # @param max_queue_size: max queue length (passed to Interface)
     # List of in and out interfaces
 
-    def __init__(self, name, in_count, out_count, max_queue_size, routing_table=None):
+    def __init__(self, name, in_count, out_count, max_queue_size, table):
         self.stop = False  # for thread termination
         self.name = name
         # create a list of interfaces
         self.in_intf_L = [Interface(max_queue_size) for _ in range(in_count)]
         self.out_intf_L = [Interface(max_queue_size) for _ in range(out_count)]
-        self.routing_table = routing_table
+        self.table = table
 
     ## called when printing the object
     def __str__(self):
@@ -285,10 +285,8 @@ class Router:
                     offset = int(str(p)[pid_len + frag_len: pid_len + frag_len + offset_len])
                     dst_addr = str(p)[pid_len + frag_len + offset_len: pid_len + frag_len + offset_len
                                                                 + dst_addr_S_length]
-                    print('recieved destination address: %s' % dst_addr)
                     src_addr = str(p)[pid_len + frag_len + offset_len + dst_addr_S_length: pid_len + frag_len
                                                                 + offset_len + dst_addr_S_length + src_addr_S_length]
-                    print('recieved source address %s' % src_addr)
                     data_S = str(p)[NetworkPacket.header_len:]
 
                     ## Assumes mtu won't change during this indentation
@@ -322,14 +320,14 @@ class Router:
                             # print("Now sending this many chars:: ", len(data_S[mtu*i:mtu*(i+1)]))
                             print('%s: sending packet "%s" on the out interface with mtu=%d' % (
                                 self, p, self.out_intf_L[0].mtu))
-                            self.out_intf_L[i].put(p.to_byte_S(), True)
+                            self.out_intf_L[self.table[(src_addr, dst_addr)]].put(p.to_byte_S(), True)
                     #     print('%s: forwarding packet "%s" from interface %d to %d with mtu %d' \
                     #           % (self, p, i, i, self.out_intf_L[i].mtu))
 
                     # If not fragmenting
                     else:
                         p = NetworkPacket.from_byte_S(pkt_S)
-                        self.out_intf_L[i].put(p.to_byte_S(), True)
+                        self.out_intf_L[self.table[(src_addr, dst_addr)]].put(p.to_byte_S(), True)
                         # print('%s: forwarding packet "%s" from interface w/out fragmentation %d to %d with mtu %d' \
                         #      % (self, p, i, i, self.out_intf_L[i].mtu))
 

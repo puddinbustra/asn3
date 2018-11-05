@@ -12,7 +12,7 @@ from time import sleep
 
 ##configuration parameters
 router_queue_size = 0  # 0 means unlimited
-simulation_time = 2  # give the network sufficient time to transfer all packets before quitting, may need to increase
+simulation_time = 6  # give the network sufficient time to transfer all packets before quitting, may need to increase
 
 if __name__ == '__main__':
     object_L = []  # keeps track of objects, so we can kill their threads
@@ -31,10 +31,18 @@ if __name__ == '__main__':
 
     #Routers are given a name, in_count is the number of in interfaces, out_count is the number of out interfaces,
     #Max queue size 0 means they are unlimited
-    router_a = network.Router(name='A', in_count=2, out_count=2, max_queue_size=router_queue_size)
-    router_b = network.Router(name='B', in_count=1, out_count=1, max_queue_size=router_queue_size)
-    router_c = network.Router(name='C', in_count=1, out_count=1, max_queue_size=router_queue_size)
-    router_d = network.Router(name='D', in_count=2, out_count=2, max_queue_size=router_queue_size)
+    table_a = {('00001', '00003'): 0, ('00001', '00004'): 0,
+               ('00002', '00003'): 1, ('00002', '00004'): 1}
+    router_a = network.Router(name='A', in_count=2, out_count=2, max_queue_size=router_queue_size, table=table_a)
+    table_b = {('00001', '00003'): 0, ('00001', '00004'): 0,
+               ('00002', '00003'): 0, ('00002', '00004'): 0}
+    router_b = network.Router(name='B', in_count=1, out_count=1, max_queue_size=router_queue_size, table=table_b)
+    table_c = {('00001', '00003'): 0, ('00001', '00004'): 0,
+               ('00002', '00003'): 0, ('00002', '00004'): 0}
+    router_c = network.Router(name='C', in_count=1, out_count=1, max_queue_size=router_queue_size, table=table_c)
+    table_d = {('00001', '00003'): 0, ('00001', '00004'): 1,
+               ('00002', '00003'): 0, ('00002', '00004'): 1}
+    router_d = network.Router(name='D', in_count=2, out_count=2, max_queue_size=router_queue_size, table=table_d)
     object_L.append(router_a)
     object_L.append(router_b)
     object_L.append(router_c)
@@ -96,7 +104,7 @@ if __name__ == '__main__':
     #0s are in order here: frag, offset, pid
     #Need to manually put in the id here; it will not increase on its own
     #Note in packet format it's: pid,frag,offset,dst_addr,payload
-    client1.udt_send(3, myData, 66, 0, 0)
+    client2.udt_send(4, myData, 66, 0, 0)
 
     # give the network sufficient time to transfer all packets before quitting
     #This is to help deal with packet buildup. As this becomes longer, we may need to increase this to more seconds
