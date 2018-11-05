@@ -306,7 +306,7 @@ class Router:
                             #print("Now sending this many chars:: ", len(data_S[mtu*i:mtu*(i+1)]))
                             print('%s: sending packet "%s" on the out interface with mtu=%d' % (
                                 self, p, self.out_intf_L[0].mtu))
-                            self.out_intf_L[i].put(p.to_byte_S(), True)
+                            #self.out_intf_L[i].put(p.to_byte_S(), True)
                        #     print('%s: forwarding packet "%s" from interface %d to %d with mtu %d' \
                        #           % (self, p, i, i, self.out_intf_L[i].mtu))
 
