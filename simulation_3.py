@@ -63,8 +63,8 @@ if __name__ == '__main__':
     # start all the objects
     #Each node, and the link layer all together need threads
     thread_L = []
-    thread_L.append(threading.Thread(name=client.__str__(), target=client.run))
-    thread_L.append(threading.Thread(name=server.__str__(), target=server.run))
+    thread_L.append(threading.Thread(name=client1.__str__(), target=client1.run))
+    thread_L.append(threading.Thread(name=server2.__str__(), target=server2.run))
     thread_L.append(threading.Thread(name=router_a.__str__(), target=router_a.run))
 
     thread_L.append(threading.Thread(name="Network", target=link_layer.run))
@@ -87,7 +87,7 @@ if __name__ == '__main__':
     #0s are in order here: frag, offset, pid
     #Need to manually put in the id here; it will not increase on its own
     #Note in packet format it's: pid,frag,offset,dst_addr,payload
-    client.udt_send(2, myData,66,0,0)
+    client1.udt_send(3, myData, 66, 0, 0)
 
 
     # give the network sufficient time to transfer all packets before quitting
