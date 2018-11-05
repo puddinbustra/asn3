@@ -12,7 +12,7 @@ from time import sleep
 
 ##configuration parameters
 router_queue_size = 0  # 0 means unlimited
-simulation_time = 1  # give the network sufficient time to transfer all packets before quitting, may need to increase
+simulation_time = 1.5  # give the network sufficient time to transfer all packets before quitting, may need to increase
 
 if __name__ == '__main__':
     object_L = []  # keeps track of objects, so we can kill their threads
@@ -38,7 +38,7 @@ if __name__ == '__main__':
     #Out interface first, in interface is second
     #So for this first line, client out interface 0, to router interface in 0
     link_layer.add_link(link.Link(client, 0, router_a, 0, 50))
-    link_layer.add_link(link.Link(router_a, 0, server, 0, 50))
+    link_layer.add_link(link.Link(router_a, 0, server, 0, 30))
 
     # start all the objects
     #Each node, and the link layer all together need threads
@@ -67,7 +67,7 @@ if __name__ == '__main__':
     #0s are in order here: frag, offset, pid
     #Need to manually put in the id here; it will not increase on its own
     #Note in packet format it's: pid,frag,offset,dst_addr,payload
-    client.udt_send(2, myData,7,0,0)
+    client.udt_send(2, myData,66,0,0)
 
 
     # give the network sufficient time to transfer all packets before quitting

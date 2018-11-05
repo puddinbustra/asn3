@@ -84,9 +84,9 @@ class NetworkPacket:
     def from_byte_S(self, byte_S):
         pid = int(byte_S[0: self.pid_len])
         frag = int(byte_S[self.pid_len: self.pid_len+self.frag_len])
-        offset = int(byte_S[self.pid_len+self.frag_len: self.pid_len+self.frag_len + self.offset_len])
-        dst_addr = int(byte_S[self.pid_len+self.frag_len + self.offset_len:self.pid_len+self.frag_len + self.offset_len \
-                       + self.dst_addr_S_length])
+        offset = int(byte_S[self.pid_len+self.frag_len: self.pid_len+self.frag_len+self.offset_len])
+        dst_addr = int(byte_S[self.pid_len+self.frag_len+self.offset_len:self.pid_len+self.frag_len+self.offset_len \
+                       +self.dst_addr_S_length])
         data_S = byte_S[NetworkPacket.header_len:]
         return self(dst_addr, data_S,pid,frag,offset)
 
@@ -119,7 +119,7 @@ class Host:
 
         print("Len of data is ",len(data_S), "and data is:",data_S)
         print()
-        print(mtu,"is mtu")
+        #print(mtu,"is mtu")
 
         ##Hugh adding - cut data up if it's longer than mtu
         for i in range(math.ceil(len(data_S)/mtu)):
@@ -134,7 +134,10 @@ class Host:
         pkt_S = self.in_intf_L[0].get()
 
         if pkt_S is not None:
+            #frag = int(str(p)[NetworkPacket.pid_len: NetworkPacket.pid_len + NetworkPacket.frag_len])
             payload = ""
+            print("Going through receive now")
+
             #current highest offset + data length
             max = 0
             #Lower bound is the lowest offset we've put in so far
@@ -143,13 +146,16 @@ class Host:
             #Will go through once if not fragmented
             #Right now, this will have to be changed if a packet is fragmented repeatedely
             #So that it checks the original packet length (or something), to ensure it's finished with everything
+                #Because it might get a fragmented frag of 0, rather than the final one and end early
             #Right now, this should work for reordered packets as well
             while True:
 
                 while(pkt_S is None):
                     # Get the next packet
                     pkt_S = self.in_intf_L[0].get()
-
+                print("Receieved in udt receive:", pkt_S)
+                print()
+                print("Payload is:",payload)
                 p = NetworkPacket.from_byte_S(pkt_S)
 
                 pid_len = NetworkPacket.pid_len
@@ -186,8 +192,8 @@ class Host:
             #After dealing with the packet, free up the variable for the next one
                 pkt_S = None
 
-            print('%s: received packet "%s" on the in interface' % (self, pkt_S))
-            print("Received payload",payload)
+            print('%s: received packet "%s" on the in interface' % (self, payload))
+            #print("Received payload",payload)
 
     ## thread target for the host to keep receiving data
     #While true, call udt receive to see if there's anything new in the in interface, and that's it
@@ -239,6 +245,7 @@ class Router:
 
                 if pkt_S is not None:
                     print("Forwarding")
+                    print()
 
                     p = NetworkPacket.from_byte_S(pkt_S)  # parse a packet out
                     pid_len = NetworkPacket.pid_len
@@ -247,15 +254,15 @@ class Router:
                     dst_addr_S_length = NetworkPacket.dst_addr_S_length
 
                     #Stuff from the packet
-                    pid      = str(p)[:pid_len]
+                    pid      = int(str(p)[:pid_len])
                     frag     = str(p)[pid_len : pid_len + frag_len]
-                    offset   = str(p)[pid_len + frag_len : pid_len + frag_len + offset_len]
+                    offset   = int(str(p)[pid_len + frag_len : pid_len + frag_len + offset_len])
                     dst_addr = str(p)[pid_len + frag_len + offset_len : pid_len + frag_len + offset_len + dst_addr_S_length]
                     data_S   = str(p)[NetworkPacket.header_len:]
 
                     ## Assumes mtu won't change during this indentation
                     ## Subtracts number
-                    mtu = self.out_intf_L[0].mtu
+                    mtu = self.out_intf_L[0].mtu - NetworkPacket.header_len
                     #print("MTU IS ",mtu)
 
                     #Fragmenting now
@@ -265,27 +272,38 @@ class Router:
                             #Dealing with header
                             frag = 1
                             #If we're on the last one, put in frag as 0
-                            if(j == math.ceil(len(data_S)) / mtu):
+                            if(j == int(len(data_S) / mtu)):
                                 frag = 0
 
-                            #Want the offset to be the number of chars in the payload
-                            offset = offset + data_S/(math.ceil(len(data_S))/mtu)*j
+                            #print("J is ",j, "and range is",math.ceil(len(data_S) / mtu))
 
-                            #Fragmenting
+                            #print("Numerator: ",offset + len(data_S),"Denominator:",(math.ceil(len(data_S) / mtu)) * j)
+
+                            # offset is where this packet is supposed to start reassembly, while avoiding division by 0
+                            # offset is just previous offset sent in, with the mtu * how many times we've gone through
+                            offset = offset +  mtu * j
+
+
+                            #print("offset is ",offset)
+
+
+
+                            #Fragmenting                       data_S[mtu*i:mtu*(i+1)]
                             p = NetworkPacket(dst_addr, data_S[mtu * j : mtu * (j + 1)],pid,frag,offset)
                             self.out_intf_L[0].put(p.to_byte_S())
                             #print("Now sending this many chars:: ", len(data_S[mtu*i:mtu*(i+1)]))
                             print('%s: sending packet "%s" on the out interface with mtu=%d' % (
                                 self, p, self.out_intf_L[0].mtu))
                             self.out_intf_L[i].put(p.to_byte_S(), True)
-                            print('%s: forwarding packet "%s" from interface %d to %d with mtu %d' \
-                                  % (self, p, i, i, self.out_intf_L[i].mtu))
+                       #     print('%s: forwarding packet "%s" from interface %d to %d with mtu %d' \
+                       #           % (self, p, i, i, self.out_intf_L[i].mtu))
+
                     #If not fragmenting
                     else:
                         p = NetworkPacket.from_byte_S(pkt_S)
                         self.out_intf_L[i].put(p.to_byte_S(), True)
-                        print('%s: forwarding packet "%s" from interface w/out fragmentation %d to %d with mtu %d' \
-                              % (self, p, i, i, self.out_intf_L[i].mtu))
+                        #print('%s: forwarding packet "%s" from interface w/out fragmentation %d to %d with mtu %d' \
+                        #      % (self, p, i, i, self.out_intf_L[i].mtu))
 
 
 
